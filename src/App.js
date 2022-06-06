@@ -10,7 +10,8 @@ class App extends Component {
     super()
     this.state = {
       weatherData: '',
-      currentCity: ''
+      currentCity: '',
+      error: ''
     }
 
     this.getWeather = this.getWeather.bind(this)
@@ -20,23 +21,33 @@ class App extends Component {
   componentDidMount = () => {
     fetch('https://goweather.herokuapp.com/weather/London')
     .then(response => response.json())
-    .then(data => this.setState({ weatherData: data, currentCity: "London" }))
+    .then(data => this.setState({ weatherData: data, currentCity: "London", error: false }))
+    .catch(err => this.setState({ error: "There Was A Problem Loading The Page"}))
   }
 
   getWeather = (city, event) => {
     event.preventDefault()
     fetch(`https://goweather.herokuapp.com/weather/${city}`)
     .then(response => response.json())
-    .then(data => this.setState({ weatherData: data, currentCity: city }))
-    .catch(err => console.log("ERROR"))
+    .then(data => {
+      if(data.temperature) {
+        this.setState({ weatherData: data, currentCity: city, error: '' })
+      } else if (data.temperature === "") {
+        this.setState({error: "No Results Match Your Search"})
+      }
+
+    })
+    .catch(err => this.setState({ error: "No Results Match Your Search"}))
   }
 
   render() {
+
     return (
       <div>
       <Nav getWeather={this.getWeather} />
       <div className="App">
-        {this.state.weatherData && this.state.currentCity && <Weather weatherData={this.state.weatherData} currentCity={this.state.currentCity} />}
+        {this.state.weatherData && this.state.currentCity && !this.state.error && <Weather weatherData={this.state.weatherData} currentCity={this.state.currentCity} />}
+        {this.state.error && <Weather error={this.state.error} />}
       </div>
       </div>
     );
